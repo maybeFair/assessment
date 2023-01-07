@@ -4,14 +4,14 @@ type Resbody struct {
 	Id     int      `json:"id"`
 	Title  string   `json:"title"`
 	Note   string   `json:"note"`
-	Amount int      `json:"amount"`
+	Amount float64  `json:"amount"`
 	Tags   []string `json:"tags"`
 }
 
 type Reqbody struct {
 	Title  string   `json:"title"`
 	Note   string   `json:"note"`
-	Amount int      `json:"amount"`
+	Amount float64  `json:"amount"`
 	Tags   []string `json:"tags"`
 }
 
