@@ -99,27 +99,24 @@ func getAllexpensesHandler(c echo.Context) error {
 		log.Fatal("Connect to database error", err)
 	}
 
-	id := c.Param("id")
-	if id == "" {
-		return c.JSON(http.StatusBadRequest, model.Errmsg{Message: "Id is not found value"})
-	}
 	result := model.Resbody{}
-	row := db.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id=$1", id)
+	rows, err := db.Query("SELECT id, title, amount, note, tags FROM expenses")
+	resBody := []model.Resbody{}
+	for rows.Next() {
+		err := rows.Scan(&result.Id, &result.Title, &result.Amount, &result.Note, pq.Array(&result.Tags))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, model.Errmsg{Message: err.Error()})
+		}
 
-	err1 := row.Scan(&result.Id, &result.Title, &result.Amount, &result.Note, pq.Array(&result.Tags))
-	if err1 != nil {
-		return c.JSON(http.StatusInternalServerError, model.Errmsg{Message: err.Error()})
-	}
-
-	resBody := model.Resbody{
-		Id:     result.Id,
-		Title:  result.Title,
-		Amount: result.Amount,
-		Note:   result.Note,
-		Tags:   result.Tags,
+		resBody = append(resBody, model.Resbody{
+			Id:     result.Id,
+			Title:  result.Title,
+			Amount: result.Amount,
+			Note:   result.Note,
+			Tags:   result.Tags,
+		})
 	}
 	defer db.Close()
-
 	return c.JSON(http.StatusOK, resBody)
 
 }
