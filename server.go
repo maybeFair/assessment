@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	sqldb, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Connect to database error", err)
 	}
@@ -27,7 +27,7 @@ func init() {
 		tags TEXT[]
 	);`
 
-	_, err = sqldb.Exec(createTb)
+	_, err = db.Exec(createTb)
 	if err != nil {
 		log.Fatal("can't create table", err)
 	}
@@ -63,6 +63,36 @@ func createExpenseHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resbody)
 
 }
+func getIdExpenseHandlers(c echo.Context) error {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Connect to database error", err)
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		return c.JSON(http.StatusBadRequest, model.Errmsg{Message: "Id is not found value"})
+	}
+	result := model.Resbody{}
+	row := db.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id=$1", id)
+
+	err1 := row.Scan(&result.Id, &result.Title, &result.Amount, &result.Note, pq.Array(&result.Tags))
+	if err1 != nil {
+		return c.JSON(http.StatusInternalServerError, model.Errmsg{Message: err.Error()})
+	}
+
+	resBody := model.Resbody{
+		Id:     result.Id,
+		Title:  result.Title,
+		Amount: result.Amount,
+		Note:   result.Note,
+		Tags:   result.Tags,
+	}
+	defer db.Close()
+
+	return c.JSON(http.StatusOK, resBody)
+
+}
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -74,6 +104,7 @@ func main() {
 		},
 	}))
 	e.POST("/expenses", createExpenseHandler)
+	e.GET("/expenses/:id", getIdExpenseHandlers)
 	fmt.Println("Please use server.go for main file")
 	fmt.Println("start at port:", os.Getenv("PORT"))
 	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))

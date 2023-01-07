@@ -3,8 +3,8 @@ package model
 type Resbody struct {
 	Id     int      `json:"id"`
 	Title  string   `json:"title"`
-	Note   string   `json:"note"`
 	Amount float64  `json:"amount"`
+	Note   string   `json:"note"`
 	Tags   []string `json:"tags"`
 }
 
